@@ -1823,3 +1823,539 @@ else
 fi
 
 echo "" >> ./verification.txt
+echo "--CRON AND ANACRON--" >> ./verification.txt 
+#Check whether Anacron Daemon is enabled or not
+if rpm -q cronie-anacron > /dev/null
+then
+	echo "[PASS] Anacron Daemon has been installed." >> ./verification.txt
+else
+	echo "[FAILED] Please ensure that you have Anacron Daemon has been installed." >> ./verification.txt
+fi
+echo "" >> ./verification.txt
+
+#Check if Crond Daemon is enabled
+checkCronDaemon=$(systemctl is-enabled crond 2>/dev/null)
+if [[ $checkCronDaemon = "enabled" ]]
+then
+	echo "[PASS] Crond Daemon has been enabled." >> ./verification.txt
+else
+	echo "[FAILED] Please ensure that you have enabled crond Daemon." >> ./verification.txt
+fi
+echo "" >> ./verification.txt
+
+#Check if the correct permissions is configured for /etc/anacrontab
+anacrontabFile="/etc/anacrontab"
+if [ -e "$anacrontabFile" ]
+then
+	echo "[PASS] The Anacrontab file ($anacrontabFile) exists." >> ./verification.txt
+	
+	anacrontabPerm=$(stat -c "%a" "$anacrontabFile")
+	anacrontabRegex="^[0-7]00$"
+	if [[ $anacrontabPerm =~ $anacrontabRegex ]]
+	then
+		echo "[PASS] Permissions has been set correctly for $anacrontabFile." >> ./verification.txt
+	else
+		echo "[FAILED] Ensure that the permissions has been set correctly for $anacrontabFile." >> ./verification.txt
+	fi
+
+	anacrontabOwn=$(stat -c "%U" "$anacrontabFile")
+	if [[ $anacrontabOwn == "root" ]]
+	then
+		echo "[PASS] Owner of the file ($anacrontabFile): $anacrontabOwn" >> ./verification.txt
+	else
+		echo "[FAILED] Owner of the file ($anacrontabFile): $anacrontabOwn. Please ensure that the owner of the file is root instead." >> ./verification.txt
+	fi
+
+	anacrontabGrp=$(stat -c "%G" "$anacrontabFile")
+	if [[ $anacrontabGrp == "root" ]]
+	then
+		echo "[PASS] Group owner of the file ($anacrontabFile): $anacrontabGrp" >> ./verification.txt
+	else
+		echo "[FAILED] Group owner of the file ($anacrontabFile): $anacrontabGrp. Please ensure that the group owner is root instead." >> ./verification.txt
+	fi
+else
+	echo "[FAILED] The Anacrontab file does not exist. Please ensure that you have Anacron Daemon installed." >> ./verification.txt
+fi
+echo "" >> ./verification.txt
+
+#Check if the correct permissions has been configured for /etc/crontab
+crontabFile="/etc/crontab"
+if [ -e "$crontabFile" ]
+then
+	crontabPerm=$(stat -c "%a" "$crontabFile")
+	crontabRegex="^[0-7]00$"
+	if [[ $crontabPerm =~ $crontabRegex ]]
+	then
+		echo "[PASS] Permissions has been set correctly for $crontabFile." >> ./verification.txt
+	else
+		echo "[FAILED] Ensure that the permissions has been set correctly for $crontabFile." >> ./verification.txt
+	fi
+
+	crontabOwn=$(stat -c "%U" "$crontabFile")
+	if [[ $crontabOwn == "root" ]]
+	then
+		echo "[PASS] Owner of the file ($crontabFile): $crontabOwn" >> ./verification.txt
+	else
+		echo "[FAILED] Owner of the file ($crontabFile): $crontabOwn. Please ensure that the owner of the file is root instead." >> ./verification.txt
+	fi
+
+	crontabGrp=$(stat -c "%G" "$crontabFile")
+	if [ $crontabGrp = "root" ]
+	then
+		echo "[PASS] Group owner of the file ($crontabFile): $crontabGrp" >> ./verification.txt
+	else
+		echo "[FAILED] Group owner of the file ($crontabFIle): $crontabGrp. Please ensure that the group owner of the file is root instead." >> ./verification.txt
+	fi
+
+else
+	echo "[FAILED] The crontab file ($crontabFile) does not exist." >> ./verification.txt
+fi
+echo "" >> ./verification.txt
+
+#Check if the correct permissions has been set for /etc/cron.XXXX
+checkCronHDWMPerm(){
+	local cronHDWMType=$1
+	local cronHDWMFile="/etc/cron.$cronHDWMType"
+
+	if [ -e "$cronHDWMFile" ]
+	then
+		local cronHDWMPerm=$(stat -c "%a" "$cronHDWMFile")
+		local cronHDWMRegex="^[0-7]00$"
+		if [[ $cronHDWMPerm =~ $cronHDWMRegex ]]
+		then
+			echo "[PASS] Permissions has been set correctly for $cronHDWMFile." >> ./verification.txt
+		else
+			echo "[FAILED] Ensure that the permissions has been set correctly for $cronHDWMFile." >> ./verification.txt
+		fi
+
+		local cronHDWMOwn="$(stat -c "%U" "$cronHDWMFile")"
+		if [ $cronHDWMOwn = "root" ]
+		then
+			echo "[PASS] Owner of the file ($cronHDWMFile): $cronHDWMOwn" >> ./verification.txt
+		else
+			echo "[FAILED] Owner of the file ($cronHDWMFile): $cronHDWMOwn. Please ensure that the owner of the file is root instead." >> ./verification.txt
+		fi
+
+		local cronHDWMGrp="$(stat -c "%G" "$cronHDWMFile")"
+		if [ $cronHDWMGrp = "root" ]
+		then
+			echo "[PASS] Group Owner of the file ($cronHDWMFile): $cronHDWMGrp" >> ./verification.txt
+		else
+			echo "[FAILED] Group Owner of the file ($cronHDWMFile): $cronHDWMGrp. Please ensure that the group owner of the file is root instead." >> ./verification.txt
+		fi
+	else
+		echo "[FAILED] File ($cronHDWMFile) does not exist." >> ./verification.txt
+	fi	
+}
+echo "" >> ./verification.txt
+
+checkCronHDWMPerm "hourly"
+checkCronHDWMPerm "daily"
+checkCronHDWMPerm "weekly"
+checkCronHDWMPerm "monthly"
+
+#Check if the permissions has been set correctly for /etc/cron.d
+cronDFile="/etc/cron.d"
+if [ -e "$cronDFile" ]
+then
+	echo "[PASS] The cron.d file ($cronDFile) exists." >> ./verification.txt
+	cronDPerm=$(stat -c "%a" "$cronDFile")
+	cronDRegex="^[0-7]00$"
+	if [[ $cronDPerm =~ $cronDRegex ]]
+	then
+		echo "[PASS] Permissions has been set correctly for $cronDFile." >> ./verification.txt
+	else
+		echo "[FAILED] Ensure that the permissions has been set correctly for $cronDFile." >> ./verification.txt
+	fi
+
+	cronDOwn=$(stat -c "%U" "$cronDFile")
+	if [ $cronDOwn = "root" ]
+	then
+		echo "[PASS] Owner of the file ($cronDFile): $cronDOwn" >> ./verification.txt
+	else
+		echo "[FAILED] Owner of the file ($cronDFile): $cronDOwn. Please ensure that the owner of the file is root instead." >> ./verification.txt
+ 	fi
+
+	cronDGrp=$(stat -c "%G" "$cronDFile")
+	if [ $cronDGrp = "root" ]
+	then
+		echo "[PASS] Group owner of the file ($cronDFile): $cronDGrp" >> ./verification.txt
+	else
+		echo "[FAILED] Group owner of the file ($cronDFile): $cronDGrp. Please ensure that the group owner of the file is root instead." >> ./verification.txt
+	fi
+else
+	echo "[FAILED] The cron.d file ($cronDFile) does not exist." >> ./verification.txt
+fi
+echo "" >> ./verification.txt
+
+#Check if /etc/at.deny is deleted and that a /etc/at.allow exists and check the permissions of the /etc/at.allow file
+atDenyFile="/etc/at.deny"
+if [ -e "$atDenyFile" ]
+then
+	echo "[FAILED] Please ensure that the file $atDenyFile is deleted." >> ./verification.txt
+else
+	echo "[PASS] $atDenyFile is deleted as recommended." >> ./verification.txt
+fi
+
+atAllowFile="/etc/at.allow"
+if [ -e "$atAllowFile" ]
+then
+        atAllowPerm=$(stat -c "%a" "$atAllowFile")
+        atAllowRegex="^[0-7]00$"
+        if [[ $atAllowPerm =~ $atAllowRegex ]]
+        then
+            	echo "[PASS] Permissions has been set correctly for $atAllowFile." >> ./verification.txt
+        else
+            	echo "[FAILED] Ensure that the permissions has been set correctly for $atAllowFile." >> ./verification.txt
+        fi
+
+	atAllowOwn=$(stat -c "%U" "$atAllowFile")
+        if [ $atAllowOwn = "root" ]
+        then
+            	echo "[PASS] Owner of the file ($atAllowFile): $atAllowOwn" >> ./verification.txt
+        else
+            	echo "[FAILED] Owner of the file ($atAllowFile): $atAllowOwn. Please ensure that the owner of the file is root instead." >> ./verification.txt
+        fi
+
+	atAllowGrp=$(stat -c "%G" "$atAllowFile")
+	if [ $atAllowGrp = "root" ]
+	then
+		echo "[PASS] Group owner of the file ($atAllowFile): $atAllowGrp" >> ./verification.txt
+	else
+		echo "[FAILED] Group owner of the file ($atAllowFile): $atAllowGrp. Please ensure that the group owner of the file is root instead." >> ./verification.txt
+	fi
+else
+	echo "[FAILED] Please ensure that a $atAllowFile is created for security purposes." >> ./verification.txt
+fi
+echo "" >> ./verification.txt
+
+#Check if /etc/cron.deny is deleted and that a /etc/cron.allow exists and check the permissions of the /etc/cron.allow file
+cronDenyFile="/etc/cron.deny"
+if [ -e "$cronDenyFile" ]
+then
+        echo "[FAILED] Please ensure that the file $cronDenyFile is deleted." >> ./verification.txt
+else
+	echo "[PASS] $cronDenyFile is deleted as recommended." >> ./verification.txt
+fi
+
+cronAllowFile="/etc/cron.allow"
+if [ -e "$cronAllowFile" ]
+then
+    	cronAllowPerm=$(stat -c "%a" "$cronAllowFile")
+       	cronAllowRegex="^[0-7]00$"
+        if [[ $cronAllowPerm =~ $cronAllowRegex ]]
+        then
+               	echo "[PASS] Permissions has been set correctly for $cronAllowFile." >> ./verification.txt
+        else
+               	echo "[FAILED] Ensure that the permissions has been set correctly for $cronAllowFile." >> ./verification.txt
+       	fi
+
+       	cronAllowOwn=$(stat -c "%U" "$cronAllowFile")
+        if [ $cronAllowOwn = "root" ]
+        then
+                echo "[PASS] Owner of the file ($cronAllowFile): $cronAllowOwn" >> ./verification.txt
+        else
+               	echo "[FAILED] Owner of the file ($atAllowFile): $cronAllowOwn. Please ensure that the owner of the file is root instead." >> ./verification.txt
+    	fi
+
+    	cronAllowGrp=$(stat -c "%G" "$cronAllowFile")
+       	if [ $cronAllowGrp = "root" ]
+        then
+            	echo "[PASS] Group owner of the file ($cronAllowFile): $cronAllowGrp" >> ./verification.txt
+        else
+            	echo "[FAILED] Group owner of the file ($cronAllowFile): $cronAllowGrp. Please ensure that the group owner of the file is root instead." >> ./verification.txt
+        fi
+else
+    	echo "[FAILED] Please ensure that a $cronAllowFile is created for security purposes." >> ./verification.txt
+fi
+
+echo "" >> ./verification.txt
+
+echo "--SSH CONFIGURATIONS--" >> ./verification.txt	
+#Set SSH Protocol to 2
+chksshprotocol=`grep "^Protocol 2" /etc/ssh/sshd_config`
+
+if [ "$chksshprotocol" == "Protocol 2" ]
+then
+	echo "[PASS] SSH Protocol has been configured correctly" >> ./verification.txt
+else
+	echo "[FAILED] SSH Protocol has not been configured correctly." >> ./verification.txt
+fi
+echo "" >> ./verification.txt
+
+#CHeck if LogLevel has been set to INFO
+chksshloglevel=`grep "^LogLevel INFO" /etc/ssh/sshd_config`
+
+if [ "$chksshloglevel" == "LogLevel INFO" ]
+then
+	echo "[PASS] LogLevel has been set to INFO" >> ./verification.txt
+else
+	echo "[FAILED] Please ensure that LogLevel has been set to INFO." >> ./verification.txt
+fi
+echo "" >> ./verification.txt
+
+#Check the permissions on /etc/ssh/sshd_config
+deterusergroupownership=`/bin/ls -l /etc/ssh/sshd_config | grep "root root" | grep "\-rw-------"`
+
+if [ -n "deterusergroupownership" ] #-n means not null, -z means null
+then
+	echo "[PASS] The owner and group owner of the /etc/ssh/sshd_config file has been set correctly." >> ./verification.txt
+else
+	echo "[FAILED] Please ensure that the owner and the group owner of the /etc/ssh/sshd_config file has not been set." >> ./verification.txt
+fi
+echo "" >> ./verification.txt
+
+#Disbale SSH X11 Forwarding
+chkx11forwarding=`grep "^X11Forwarding no" /etc/ssh/sshd_config`
+
+if [ "$chkx11forwarding" == "X11Forwarding no" ]
+then
+	echo "[PASS] SSH X11 has been disbaled as recommended." >> ./verification.txt
+else
+	echo "[FAILED] Please ensure that SSH X11 is disabled as recommended." >> ./verification.txt
+fi
+echo "" >> ./verification.txt
+
+#Check if SSH MaxAuthTries is 4 or less
+maxauthtries=`grep "^MaxAuthTries 4" /etc/ssh/sshd_config`
+
+if [ "$maxauthtries" == "MaxAuthTries 4" ]
+then
+	echo "[PASS] SSH MaxAuthTries is set to 4 or less." >> ./verification.txt 
+else
+	echo "[FAILED] SSH MaxAuthTries is not set to 4 or less." >> ./verification.txt
+fi
+echo "" >> ./verification.txt
+
+#Check that SSH IgnoreRhosts is set to yes
+ignorerhosts=`grep "^IgnoreRhosts yes" /etc/ssh/sshd_config`
+
+if [ "$ignorerhosts" == "IgnoreRhosts yes" ]
+then
+	echo "[PASS] SSH IgnoreRhosts is set to yes." >> ./verification.txt
+else
+	echo "[FAILED] Please ensure that SSH IgnoreRhosts is set to yes" >> ./verification.txt
+fi
+echo "" >> ./verification.txt
+
+#Check if SSH HostbasedAuthentication is set to No
+hostbasedauthentication=`grep "^HostbasedAuthentication no" /etc/ssh/sshd_config`
+
+if [ "$hostbasedauthentication" == "HostbasedAuthentication no" ]
+then
+	echo "[PASS] SSH HostbasedAuthentication is set to No" >> ./verification.txt
+else
+	echo "[FAILED] Please ensure that SSH HostbasedAuthentication is set to No" >> ./verification.txt
+fi
+echo "" >> ./verification.txt
+
+#Check if SSH Root Login is disabled
+chksshrootlogin=`grep "^PermitRootLogin" /etc/ssh/sshd_config`
+
+if [ "$chksshrootlogin" == "PermitRootLogin no" ]
+then
+	echo "[PASS] SSH Root Login is disabled." >> ./verification.txt
+else
+	echo "[FAIL] Please ensure that SSH Root Login is disabled" >> ./verification.txt
+fi
+echo "" >> ./verification.txt
+
+#Check if SSH PermitEmptyPasswords
+chksshemptypswd=`grep "^PermitEmptyPasswords" /etc/ssh/sshd_config`
+
+if [ "$chksshemptypswd" == "PermitEmptyPasswords no" ]
+then
+	echo "[PASS] SSH PermitEmptyPasswords is set to no." >> ./verification.txt
+else
+	echo "[FAIL] Please ensure that SSH PermitEmptyPasswords is set to no" >> ./verification.txt
+fi
+echo "" >> ./verification.txt
+
+#Check if only approved cipher is used in counter mode
+chksshcipher=`grep "Ciphers" /etc/ssh/sshd_config`
+
+if [ "$chksshcipher" == "Ciphers aes128-ctr,aes192-ctr,aes256-ctr" ]
+then
+	echo "[PASS] Only approved cipher is used in counter mode." >> ./verification.txt
+else
+	echo "[FAILED] Please ensure that only approved cipers has been used in counter mode." >> ./verification.txt 
+fi
+echo "" >> ./verification.txt
+
+#Ensure that Idle Timeout Interval is set for user login
+chksshcai=`grep "^ClientAliveInterval" /etc/ssh/sshd_config`
+chksshcacm=`grep "^ClientAliveCountMax" /etc/ssh/sshd_config`
+
+if [ "$chksshcai" == "ClientAliveInterval 300" ]
+then
+	echo "[PASS] ClientAliveInterval has been set correctly. >> ./verification.txt"
+else
+	echo "[FAILED] Please ensure that ClientAliveInterval has been set correctly." >> ./verification.txt
+fi
+
+if [ "$chksshcacm" == "ClientAliveCountMax 0" ]
+then
+	echo "[PASS] ClientAliveCountMax has been set correctly." >> ./verification.txt
+else
+	echo "[FAILED] Please ensure that ClientAliveCountMax has been set correctly" >> ./verification.txt
+fi
+echo "" >> ./verification.txt
+
+#Limit access via SSH		*NOTE: Manually created users and groups as question was not very specific*
+chksshalwusrs=`grep "^AllowUsers" /etc/ssh/sshd_config`
+chksshalwgrps=`grep "^AllowGroups" /etc/ssh/sshd_config`
+chksshdnyusrs=`grep "^DenyUsers" /etc/ssh/sshd_config`
+chksshdnygrps=`grep "^DenyGroups" /etc/ssh/sshd_config`
+
+if [ -z "$chksshalwusrs" -o "$chksshalwusrs" == "AllowUsers[[:space:]]" ]
+then
+	echo "[FAILED] AllowUsers has not been configured correctly." >> ./verification.txt
+else
+	echo "[PASS] AllowUsers has been configured correctly." >> ./verification.txt
+fi
+
+if [ -z "$chksshalwgrps" -o "$chksshalwgrps" == "AllowGroups[[:space:]]" ]
+then
+	echo "[FAILED] AllowGroups has not been configured correctly." >> ./verification.txt
+else
+	echo "[PASS] AllowGroups has been configured correctly." >> ./verification.txt 
+fi
+
+if [ -z "$chksshdnyusrs" -o "$chksshdnyusrs" == "DenyUsers[[:space:]]" ]
+then
+	echo "[FAILED] DenyUsers has not been configured correctly." >> ./verification.txt
+else
+	echo "[PASS] DenyUsers has been configured correctly." >> ./verification.txt
+fi
+
+if [ -z "$chksshdnygrps" -o "$chksshdnygrps" == "DenyGroups[[:space:]]" ]
+then
+	echo "[FAILED] DenyGroups has not been configured correctly." >> ./verification.txt
+else	
+	echo "[PASS] DenyGroups has been configured correctly." >> ./verification.txt
+fi
+echo "" >> ./verification.txt
+
+#10.13 verification
+chksshbanner=`grep "Banner" /etc/ssh/sshd_config | awk '{ print $2 }'`
+
+if [ "$chksshbanner" == "/etc/issue.net" -o "$chksshbanner" == "/etc/issue" ]
+then
+	echo "[PASS] SSH Banner has been set." >> ./verification.txt
+else
+	echo "[FAILED] SSH Banner has not been set" >> ./verification.txt
+fi
+echo "" >> ./verification.txt
+
+echo "--PAM CONFIGURATIONS--" >> ./verification.txt
+#Check if password hashng algo is SHA-512
+checkPassAlgo=$(authconfig --test | grep hashing | grep sha512)
+checkPassRegex=".*sha512"
+if [[ $checkPassAlgo =~ $checkPassRegex ]]
+then
+	echo "[PASS] The password hashing algorithm is set to SHA-512 as recommended." >> ./verification.txt
+else
+	echo "[FAILED] Please ensure that the password hashing algorithm is set to SHA-512 as recommended." >> ./verification.txt
+fi 
+echo "" >> ./verification.txt
+
+#Check if Password Creattion Requirement Parameters is correct
+pampwconf=$(grep pam_pwquality.so /etc/pam.d/system-auth)
+correctpampwconf="password    requisite     pam_pwquality.so try_first_pass local_users_only retry=3 authtok_type="
+if [[ $pampwconf == $correctpampwconf ]]
+then
+	echo "[PASS] Recommended settings is already configured for /etc/pam.d/system-auth." >> ./verification.txt
+else
+	echo "[FAILED] Recommended settings is not configured for /etc/pam.d/system-auth." >> ./verification.txt
+fi
+
+minlen=$(grep "minlen" /etc/security/pwquality.conf)
+dcredit=$(grep "dcredit" /etc/security/pwquality.conf)
+ucredit=$(grep "ucredit" /etc/security/pwquality.conf)
+ocredit=$(grep "ocredit" /etc/security/pwquality.conf)
+lcredit=$(grep "lcredit" /etc/security/pwquality.conf)
+correctminlen="# minlen = 14"
+correctdcredit="# dcredit = -1"
+correctucredit="# ucredit = -1"
+correctocredit="# ocredit = -1"
+correctlcredit="# lcredit = -1"
+
+if [[ $minlen == $correctminlen && $dcredit == $correctdcredit && $ucredit == $correctucredit && $ocredit == $correctocredit && $lcredit == $correctlcredit ]]
+then
+	echo "[PASS] Recommended settings is already configured for /etc/security/pwquality.conf." >> ./verification.txt
+else
+	echo "[FAILED] Recommended settings is not configured for /etc/security/pwquality.conf." >> ./verification.txt
+fi
+echo "" >> ./verification.txt
+
+#Check if Lockout for Failed Password Attempts is set
+faillockpassword=$(grep "pam_faillock" /etc/pam.d/password-auth)
+faillocksystem=$(grep "pam_faillock" /etc/pam.d/system-auth)
+
+read -d '' correctpamauth << "BLOCK" 
+auth        required      pam_faillock.so preauth silent audit deny=5 unlock_time=900
+auth        [default=die] pam_faillock.so authfail audit deny=5
+auth        sufficient    pam_faillock.so authsucc audit deny=5
+account     required      pam_faillock.so
+BLOCK
+
+if [[ $faillocksystem == "$correctpamauth" && $faillockpassword == "$correctpamauth" ]]
+then
+	echo "[PASS] Lockout for Failed Password Attempts is set." >> ./verification.txt
+else
+	echo "[FAILED] Lockout for Failed Password Attempts is not set." >> ./verification.txt
+fi
+echo "" >> ./verification.txt
+
+#Check if password resuse has been limited
+pamlimitpw=$(grep "remember" /etc/pam.d/system-auth)
+if [[ $pamlimitpw == *"remember=5"* ]]
+then 
+echo "[PASS] Password resuse has been limited." >> ./verification.txt
+else
+echo "[FAILED] Password resuse has not been limited." >> ./verification.txt
+fi
+echo "" >> ./verification.txt
+
+#Check if root Login to System Console is restricted
+systemConsole="/etc/securetty"
+systemConsoleCounter=0
+while read -r line; do
+	if [ -n "$line" ]
+	then
+		[[ "$line" =~ ^#.*$ ]] && continue
+		if [ "$line" == "vc/1" ] || [ "$line" == "tty1" ]
+		then
+			systemConsoleCounter=$((systemConsoleCounter+1))
+		else
+			systemConsoleCounter=$((systemConsoleCounter+1))
+		fi
+	fi
+done < "$systemConsole"
+
+if [ $systemConsoleCounter != 2 ]
+then
+	echo "[PASS] Root Login to System Console is restricted" >> ./verification.txt
+else
+	echo "[FAILED Root Login to System Console is not restricted" >> ./verification.txt
+fi
+echo "" >> ./verification.txt
+
+#Access to the su Command is restricted
+pamsu=$(grep pam_wheel.so /etc/pam.d/su | grep required)
+if [[ $pamsu =~ ^#auth.*required ]]
+then
+	echo "[PASS] The/etc/pam.d/su is configured correctly for restricting the execution of the su command." >> ./verification.txt
+else
+	echo "[FAILED] Please ensure that the /etc/pam.d/su is configured correctly for restricting the execution of the su command." >> ./verification.txt
+fi
+
+pamwheel=$(grep wheel /etc/group)
+if [[ $pamwheel =~ ^wheel.*root ]]
+then
+	echo "[PASS] The/etc/group is configured correctly for restricting the execution of the su command." >> ./verification.txt
+else
+	echo "[FAILED] Please ensure that the /etc/group is configured correctly for restricting the execution of the su command." >> ./verification.txt
+fi
+
+echo "Please refer to the verification file created on your desktop for the full analysis report."
